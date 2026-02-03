@@ -1,193 +1,368 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Irregular Verb Trainer</title>
-<style>
-:root{
-  --bg:#020617;
-  --panel:#020617;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
-  --accent:#38bdf8;
-  --danger:#ef4444;
-}
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto}
-body{
-  margin:0; background:var(--bg); color:var(--text);
-  display:flex; align-items:center; justify-content:center;
-  min-height:100vh;
-}
-button{
-  background:none; color:var(--text);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:12px; padding:12px 18px;
-  font-size:16px; cursor:pointer;
-}
-button:active{transform:scale(.97)}
-.hidden{display:none !important}
-#app{width:100%; max-width:420px; padding:20px;}
-.center{text-align:center}
-.word{font-size:32px; margin:24px 0}
-input{
-  width:100%; padding:14px; font-size:18px;
-  border-radius:12px; border:none; outline:none;
-}
-.stats{display:flex; justify-content:space-between; margin-top:12px; font-size:14px; color:var(--muted)}
-.bottomBtns{
-  position:fixed; bottom:16px; left:16px; right:16px;
-  display:flex; justify-content:space-between;
-}
-.overlay{
-  position:fixed; inset:0; background:var(--panel);
-  display:flex; align-items:center; justify-content:center;
-  padding:24px; z-index:10;
-}
-.panel{width:100%; max-width:420px;}
-.grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px}
-.gridItem{border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px}
-.base{color:var(--accent)}
-.shake{animation:shake .35s}
-@keyframes shake{
-  0%{transform:translateX(0)}
-  25%{transform:translateX(-4px)}
-  50%{transform:translateX(4px)}
-  75%{transform:translateX(-4px)}
-  100%{transform:translateX(0)}
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>불규칙 동사 연습</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#60a5fa;--muted:#9aa6bf;--ok:#22c55e;--bad:#ef4444}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:linear-gradient(180deg,#071427 0%, #081426 100%);display:flex;align-items:center;justify-content:center;color:#e6eef8}
+    .wrap{width:100%;max-width:980px;padding:20px;box-sizing:border-box}
+    .card{background:rgba(255,255,255,0.03);border-radius:14px;padding:28px;box-shadow:0 8px 30px rgba(2,6,23,0.6);min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+    h1{margin:0 0 14px;font-weight:600;font-size:20px}
+    .center{display:flex;flex-direction:column;align-items:center;gap:12px}
+
+    button.primary{background:var(--accent);border:none;color:#04233b;padding:12px 22px;border-radius:12px;font-weight:600;font-size:16px}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:10px 16px;border-radius:10px}
+
+    .verb{font-size:56px;letter-spacing:1px;margin:6px 0}
+    .small{font-size:14px;color:var(--muted)}
+
+    .inputRow{display:flex;gap:8px;width:100%;max-width:640px}
+    input[type=text]{flex:1;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:inherit;font-size:16px}
+    .hint{margin-top:12px;font-size:15px;color:var(--muted);text-align:center}
+
+    .result{margin-top:14px;font-weight:600}
+    .result.ok{color:var(--ok)}
+    .result.bad{color:var(--bad)}
+
+    .controls{margin-top:18px;display:flex;gap:8px}
+
+    /* exit button */
+    .exit{position:fixed;right:18px;bottom:18px;background:rgba(0,0,0,0.5);border-radius:999px;padding:10px 14px;border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(6px);color:var(--muted)}
+
+    /* left bottom memorise */
+    .memorise{position:fixed;left:18px;bottom:18px;background:rgba(0,0,0,0.5);border-radius:999px;padding:10px 14px;border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(6px);color:var(--muted)}
+
+    /* left top wrong list */
+    .wrongListBtn{position:fixed;left:18px;top:18px;background:rgba(0,0,0,0.5);border-radius:999px;padding:8px 12px;border:1px solid rgba(255,255,255,0.06);backdrop-filter:blur(6px);color:var(--muted);z-index:1002;}
+
+    /* back button used in list views */
+    .backBtn{position:fixed;left:18px;bottom:18px;background:rgba(255,255,255,0.04);border-radius:8px;padding:8px 12px;border:1px solid rgba(255,255,255,0.06);color:var(--muted);z-index:1003}
+
+    /* list view */
+    .listView{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;z-index:1000;background:#020617;pointer-events:auto}
+    .listCard{width:100%;max-width:900px;height:80%;overflow:auto;background:#020617;border-radius:12px;padding:18px;box-sizing:border-box;pointer-events:auto}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+    .gridItem{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;text-align:center}
+    .base{font-size:18px;font-weight:700}
+    .past{font-size:14px;color:var(--muted);margin-top:6px}
+
+    /* stats */
+    .stats{position:absolute;left:20px;top:70px;color:var(--muted);font-size:13px}
+
+    @media (max-width:520px){
+      .verb{font-size:44px}
+      .card{padding:18px}
+      input[type=text]{font-size:15px}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+    }
+
+    /* shake animation + color change */
+    @keyframes shake{0%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}100%{transform:translateX(0)}}
+    @keyframes rejectColor{0%{border-color:#ef4444;color:#fecaca}100%{border-color:rgba(255,255,255,0.06);color:var(--muted)}}
+    .shake{animation:shake 0.35s ease, rejectColor 0.6s ease;}
+  </style>
 </head>
 <body>
-<div id="app">
-  <!-- MAIN -->
-  <div id="main" class="center">
-    <h1>Irregular Verb Quiz</h1>
-    <button id="startBtn">시작</button>
-  </div>
-
-  <!-- QUIZ -->
-  <div id="quiz" class="hidden">
-    <div class="center">
-      <div class="word" id="word"></div>
-      <input id="answer" placeholder="과거형 입력" />
-      <p id="feedback" class="muted"></p>
-      <div class="stats">
-        <span id="accuracy">정답률: 0%</span>
-        <span id="streak">연속 정답: 0</span>
+  <div class="wrap">
+    <div class="card" id="app">
+      <!-- main screen -->
+      <div id="mainScreen" class="center">
+        <h1>불규칙 과거형 연습</h1>
+        <p class="small">가운데 시작 버튼을 눌러 문제를 시작하세요. 모바일에서 사용가능.</p>
+        <button class="primary" id="startBtn">시작</button>
       </div>
+
+      <!-- quiz screen -->
+      <div id="quizScreen" class="center" style="display:none;">
+        <h1 id="promptTitle">다음 동사의 과거형을 입력하세요</h1>
+        <div class="verb" id="baseVerb">go</div>
+        <div class="inputRow">
+          <input id="answerInput" type="text" placeholder="과거형을 입력하세요 (예: went)" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+          <button class="primary" id="submitBtn">제출</button>
+        </div>
+        <div class="hint small" id="hintText">정답이면 바로 다음 문제로 넘어갑니다. 틀리면 정답을 보여줍니다.</div>
+        <div style="margin-top:8px" id="extraButtons"></div>
+        <div id="result" class="result" aria-live="polite"></div>
+        <div class="controls" id="controls" style="display:none;">
+          <button class="ghost" id="nextBtn">다음</button>
+        </div>
+
+        <div class="stats" id="stats">
+          시도: <span id="attempts">0</span>  •  정답: <span id="correct">0</span>  •  정답률: <span id="percent">0%</span>
+          <br>
+          연속정답: <span id="streak">0</span>  •  최고연속: <span id="bestStreak">0</span>
+        </div>
+      </div>
+
     </div>
   </div>
-</div>
 
-<!-- OVERLAY -->
-<div id="overlay" class="overlay hidden">
-  <div class="panel">
-    <h2 id="listTitle"></h2>
-    <div id="list" class="grid"></div>
-    <div style="margin-top:16px">
-      <button id="backBtn">돌아가기</button>
+  <button id="exitBtn" class="exit" style="display:none">종료</button>
+  <button id="memoriseBtn" class="memorise">보고 외우기</button>
+  <button id="wrongListBtn" class="wrongListBtn">틀렸던 동사</button>
+  <button id="backBtn" class="backBtn" style="display:none">돌아가기</button>
+  <div id="noWrongHint" style="position:fixed;left:18px;top:54px;font-size:12px;color:#fca5a5;opacity:0;transition:opacity .25s ease;">아직 틀린 단어가 없어요</div>
+
+  <!-- list view overlay -->
+  <div id="listView" class="listView">
+    <div class="listCard">
+      <h2 id="listTitle">단어 목록</h2>
+      <div id="listGrid" class="grid"></div>
     </div>
   </div>
-</div>
 
-<div class="bottomBtns hidden" id="bottomBtns">
-  <button id="memoriseBtn">보고 외우기</button>
-  <button id="wrongBtn">틀렸던 동사</button>
-</div>
+  <script>
+    // 확장된 불규칙 동사 목록 (base, past)
+    const verbs = [
+      {b:'arise', p:'arose'},{b:'awake', p:['awoke','awakened']},{b:'be', p:['was','were']},{b:'bear', p:'bore'},{b:'beat', p:'beat'},{b:'become', p:'became'},{b:'begin', p:'began'},{b:'bend', p:'bent'},{b:'bet', p:'bet'},{b:'bind', p:'bound'},{b:'bite', p:'bit'},{b:'bleed', p:'bled'},{b:'blow', p:'blew'},{b:'break', p:'broke'},{b:'bring', p:'brought'},{b:'broadcast', p:'broadcast'},{b:'build', p:'built'},{b:'burn', p:['burnt','burned']},{b:'burst', p:'burst'},{b:'buy', p:'bought'},{b:'catch', p:'caught'},{b:'choose', p:'chose'},{b:'cling', p:'clung'},{b:'come', p:'came'},{b:'cost', p:'cost'},{b:'creep', p:'crept'},{b:'cut', p:'cut'},{b:'deal', p:'dealt'},{b:'dig', p:'dug'},{b:'do', p:'did'},{b:'draw', p:'drew'},{b:'dream', p:['dreamt','dreamed']},{b:'drink', p:'drank'},{b:'drive', p:'drove'},{b:'eat', p:'ate'},{b:'fall', p:'fell'},{b:'feed', p:'fed'},{b:'feel', p:'felt'},{b:'fight', p:'fought'},{b:'find', p:'found'},{b:'flee', p:'fled'},{b:'fly', p:'flew'},{b:'forbid', p:'forbade'},{b:'forget', p:'forgot'},{b:'forgive', p:'forgave'},{b:'freeze', p:'froze'},{b:'get', p:'got'},{b:'give', p:'gave'},{b:'go', p:'went'},{b:'grow', p:'grew'},{b:'hang', p:'hung'},{b:'have', p:'had'},{b:'hear', p:'heard'},{b:'hide', p:'hid'},{b:'hit', p:'hit'},{b:'hold', p:'held'},{b:'hurt', p:'hurt'},{b:'keep', p:'kept'},{b:'kneel', p:['knelt','kneeled']},{b:'know', p:'knew'},{b:'lay', p:'laid'},{b:'lead', p:'led'},{b:'lean', p:['leant','leaned']},{b:'leave', p:'left'},{b:'lend', p:'lent'},{b:'let', p:'let'},{b:'lie', p:['lay','lied']},{b:'light', p:['lit','lighted']},{b:'lose', p:'lost'},{b:'make', p:'made'},{b:'mean', p:'meant'},{b:'meet', p:'met'},{b:'mow', p:['mowed','mown']},{b:'pay', p:'paid'},{b:'put', p:'put'},{b:'read', p:'read'},{b:'ride', p:'rode'},{b:'ring', p:'rang'},{b:'rise', p:'rose'},{b:'run', p:'ran'},{b:'say', p:'said'},{b:'see', p:'saw'},{b:'seek', p:'sought'},{b:'sell', p:'sold'},{b:'send', p:'sent'},{b:'set', p:'set'},{b:'shake', p:'shook'},{b:'shine', p:'shone'},{b:'shoot', p:'shot'},{b:'show', p:'showed'},{b:'shut', p:'shut'},{b:'sing', p:'sang'},{b:'sink', p:'sank'},{b:'sit', p:'sat'},{b:'sleep', p:'slept'},{b:'slide', p:'slid'},{b:'speak', p:'spoke'},{b:'spend', p:'spent'},{b:'spin', p:'spun'},{b:'split', p:'split'},{b:'spread', p:'spread'},{b:'stand', p:'stood'},{b:'steal', p:'stole'},{b:'stick', p:'stuck'},{b:'sting', p:'stung'},{b:'strike', p:'struck'},{b:'swear', p:['swore','sworn']},{b:'sweep', p:'swept'},{b:'swim', p:'swam'},{b:'swing', p:'swung'},{b:'take', p:'took'},{b:'teach', p:'taught'},{b:'tear', p:['tore','torn']},{b:'tell', p:'told'},{b:'think', p:'thought'},{b:'throw', p:'threw'},{b:'understand', p:'understood'},{b:'wake', p:['woke','woken']},{b:'wear', p:'wore'},{b:'weave', p:['wove','woven']},{b:'weep', p:'wept'},{b:'win', p:'won'},{b:'write', p:'wrote'}
+    ];
 
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
+    // UI elements
+    const mainScreen = document.getElementById('mainScreen');
+    const quizScreen = document.getElementById('quizScreen');
+    const startBtn = document.getElementById('startBtn');
+    const baseVerbEl = document.getElementById('baseVerb');
+    const answerInput = document.getElementById('answerInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultEl = document.getElementById('result');
+    const controls = document.getElementById('controls');
+    const nextBtn = document.getElementById('nextBtn');
+    const exitBtn = document.getElementById('exitBtn');
+    const memoriseBtn = document.getElementById('memoriseBtn');
+    const wrongListBtn = document.getElementById('wrongListBtn');
+    const backBtn = document.getElementById('backBtn');
+    const listView = document.getElementById('listView');
+    const listGrid = document.getElementById('listGrid');
+    const listTitle = document.getElementById('listTitle');
+    const hintText = document.getElementById('hintText');
+    const extraButtons = document.getElementById('extraButtons');
 
-// DATA
-const verbs=[
-  {b:'go',p:'went'},{b:'come',p:'came'},{b:'see',p:'saw'},
-  {b:'take',p:'took'},{b:'give',p:'gave'},{b:'get',p:'got'},
-  {b:'make',p:'made'},{b:'find',p:'found'},{b:'think',p:'thought'},
-  {b:'buy',p:'bought'},{b:'bring',p:'brought'},{b:'teach',p:'taught'},
-  {b:'catch',p:'caught'},{b:'feel',p:'felt'},{b:'keep',p:'kept'},
-  {b:'leave',p:'left'},{b:'meet',p:'met'},{b:'run',p:'ran'},
-  {b:'say',p:'said'},{b:'sit',p:'sat'},{b:'stand',p:'stood'},
-  {b:'understand',p:'understood'},{b:'wear',p:'wore'},{b:'write',p:'wrote'}
-];
+    // stats elements
+    const attemptsEl = document.getElementById('attempts');
+    const correctEl = document.getElementById('correct');
+    const percentEl = document.getElementById('percent');
+    const streakEl = document.getElementById('streak');
+    const bestStreakEl = document.getElementById('bestStreak');
 
-// STATE
-let current=null, total=0, correct=0, streak=0;
-const wrongSet=new Set();
+    let current = null;
+    let prevIndex = -1;
 
-// ELEMENTS
-const main=document.getElementById('main');
-const quiz=document.getElementById('quiz');
-const wordEl=document.getElementById('word');
-const answer=document.getElementById('answer');
-const feedback=document.getElementById('feedback');
-const accuracy=document.getElementById('accuracy');
-const streakEl=document.getElementById('streak');
-const bottomBtns=document.getElementById('bottomBtns');
-const overlay=document.getElementById('overlay');
-const list=document.getElementById('list');
-const listTitle=document.getElementById('listTitle');
-const memoriseBtn=document.getElementById('memoriseBtn');
-const wrongBtn=document.getElementById('wrongBtn');
-const backBtn=document.getElementById('backBtn');
-const startBtn=document.getElementById('startBtn');
+    // progress tracking
+    let totalAttempts = 0;
+    let correctCount = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
 
-// FUNCTIONS
-function pick(){
-  current=verbs[Math.floor(Math.random()*verbs.length)];
-  wordEl.textContent=current.b;
-  answer.value=''; answer.focus();
-}
-function updateStats(){
-  accuracy.textContent=`정답률: ${total?Math.round(correct/total*100):0}%`;
-  streakEl.textContent=`연속 정답: ${streak}`;
-}
-function showList(title,items){
-  overlay.classList.remove('hidden');
-  listTitle.textContent=title;
-  list.innerHTML='';
-  if(items.length===0){list.textContent='없음';return;}
-  items.forEach(v=>{
-    const d=document.createElement('div'); d.className='gridItem';
-    d.innerHTML=`<div class=base>${v.b}</div><div>${v.p}</div>`;
-    list.appendChild(d);
-  });
-}
+    // wrong words set
+    const wrongSet = new Set();
 
-// EVENTS
-startBtn.onclick=()=>{
-  main.classList.add('hidden'); quiz.classList.remove('hidden');
-  bottomBtns.classList.remove('hidden');
-  pick();
-};
+    // wrong-only retry mode
+    let wrongOnlyMode = false;
+    let wrongQueue = [];
 
-answer.addEventListener('keydown',e=>{
-  if(e.key!=='Enter')return;
-  total++;
-  if(answer.value.trim().toLowerCase()===current.p){
-    correct++; streak++; feedback.textContent='정답!';
-  }else{
-    streak=0; wrongSet.add(current.b);
-    feedback.textContent=`정답: ${current.p}`;
-  }
-  updateStats(); pick();
-});
+    function pickRandomFrom(list){
+      if (!list || list.length===0) return null;
+      let i = Math.floor(Math.random()*list.length);
+      return list[i];
+    }
 
-memoriseBtn.onclick=()=>showList('전체 동사',verbs);
-wrongBtn.onclick=()=>{
-  if(wrongSet.size===0){
-    wrongBtn.classList.remove('shake');
-    void wrongBtn.offsetWidth;
-    wrongBtn.classList.add('shake');
-    return;
-  }
-  const arr=[...wrongSet].map(b=>verbs.find(v=>v.b===b));
-  showList('틀렸던 동사',arr);
-};
-backBtn.onclick=()=>overlay.classList.add('hidden');
+    function pickRandom(){
+      return pickRandomFrom(verbs);
+    }
 
-});
-</script>
+    function showMain(){
+      quizScreen.style.display = 'none';
+      mainScreen.style.display = 'flex';
+      exitBtn.style.display = 'none';
+      memoriseBtn.style.display = 'block';
+      wrongListBtn.style.display = 'block';
+      backBtn.style.display = 'none';
+      listView.style.display = 'none';
+      resultEl.textContent = '';
+      answerInput.value = '';
+      updateStatsUI();
+      extraButtons.innerHTML = '';
+    }
+
+    function startQuiz(){
+      mainScreen.style.display = 'none';
+      quizScreen.style.display = 'flex';
+      exitBtn.style.display = 'block';
+      memoriseBtn.style.display = 'block';
+      wrongListBtn.style.display = 'block';
+      backBtn.style.display = 'none';
+      nextProblem();
+      answerInput.focus();
+    }
+
+    function normalize(s){
+      return String(s||'').trim().toLowerCase();
+    }
+
+    function isCorrect(input, past){
+      const got = normalize(input);
+      const accepted = Array.isArray(past) ? past : [past];
+      return accepted.map(normalize).includes(got);
+    }
+
+    function showCorrectAnswer(past){
+      const accepted = Array.isArray(past) ? past : [past];
+      return accepted.join(' / ');
+    }
+
+    function updateStatsUI(){
+      attemptsEl.textContent = totalAttempts;
+      correctEl.textContent = correctCount;
+      percentEl.textContent = totalAttempts? Math.round((correctCount/totalAttempts)*100) + '%':'0%';
+      streakEl.textContent = currentStreak;
+      bestStreakEl.textContent = bestStreak;
+
+      // show "틀린 단어만 다시" 버튼 after 10 attempts
+      extraButtons.innerHTML = '';
+      if (totalAttempts >= 10 && wrongSet.size > 0 && !wrongOnlyMode){
+        const btn = document.createElement('button');
+        btn.className = 'ghost';
+        btn.textContent = '틀린 단어만 다시';
+        btn.addEventListener('click', startWrongOnlyMode);
+        extraButtons.appendChild(btn);
+      }
+    }
+
+    function nextProblem(){
+      if (wrongOnlyMode){
+        if (wrongQueue.length === 0){
+          wrongOnlyMode = false;
+          // restore normal
+          resultEl.textContent = '모든 틀린 단어를 다시 냈습니다. 일반 모드로 돌아갑니다.';
+          setTimeout(()=>{ resultEl.textContent=''; nextProblem(); updateStatsUI(); }, 800);
+          return;
+        }
+        current = wrongQueue.shift();
+      } else {
+        current = pickRandom();
+      }
+      baseVerbEl.textContent = current.b;
+      resultEl.textContent = '';
+      resultEl.className = 'result';
+      controls.style.display = 'none';
+      answerInput.disabled = false;
+      submitBtn.disabled = false;
+      answerInput.value = '';
+      answerInput.focus();
+    }
+
+    function handleSubmit(){
+      const user = answerInput.value;
+      if (!user.trim()) return;
+
+      totalAttempts += 1;
+      if (isCorrect(user, current.p)){
+        correctCount += 1;
+        currentStreak += 1;
+        if (currentStreak > bestStreak) bestStreak = currentStreak;
+        resultEl.textContent = '정답! 다음 문제로...';
+        resultEl.classList.add('ok');
+        // if this was in wrong-only mode, don't re-add to wrongSet
+        if (!wrongOnlyMode){
+          // remove from wrongSet if previously wrong and now corrected (optional)
+          if (wrongSet.has(current.b)) wrongSet.delete(current.b);
+        }
+        updateStatsUI();
+        // 바로 다음 문제로
+        setTimeout(nextProblem, 550);
+      } else {
+        currentStreak = 0;
+        wrongSet.add(current.b);
+        const correct = showCorrectAnswer(current.p);
+        resultEl.textContent = `오답. 정답: ${correct}`;
+        resultEl.classList.add('bad');
+        // show next 버튼
+        controls.style.display = 'flex';
+        answerInput.disabled = true;
+        submitBtn.disabled = true;
+        updateStatsUI();
+      }
+    }
+
+    function startWrongOnlyMode(){
+      if (wrongSet.size === 0) return;
+      wrongOnlyMode = true;
+      // build queue of verb objects
+      wrongQueue = Array.from(wrongSet).map(b=> verbs.find(v=>v.b===b)).filter(Boolean);
+      // shuffle
+      for (let i=wrongQueue.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));[wrongQueue[i],wrongQueue[j]]=[wrongQueue[j],wrongQueue[i]];
+      }
+      // update UI
+      resultEl.textContent = '틀렸던 단어만 다시 내는 모드 시작...';
+      setTimeout(()=>{ nextProblem(); updateStatsUI(); },500);
+    }
+
+    // List / Memorise view
+    function showList(title, list){
+      listTitle.textContent = title;
+      listGrid.innerHTML = '';
+      if (!list || list.length===0){
+        const empty = document.createElement('div'); empty.textContent='표시할 단어가 없습니다.'; empty.style.color='var(--muted)'; listGrid.appendChild(empty); return;
+      }
+      list.forEach(item=>{
+        const it = document.createElement('div'); it.className='gridItem';
+        const base = document.createElement('div'); base.className='base'; base.textContent = item.b;
+        const past = document.createElement('div'); past.className='past'; past.textContent = Array.isArray(item.p)? item.p.join(' / '): item.p;
+        it.appendChild(base); it.appendChild(past);
+        listGrid.appendChild(it);
+      });
+      listView.style.display = 'flex';
+      memoriseBtn.style.display = 'none';
+      wrongListBtn.style.display = 'none';
+      backBtn.style.display = 'block';
+    }
+
+    memoriseBtn.addEventListener('click', ()=>{
+      showList('보고 외우기 - 전체 단어', verbs);
+    });
+
+    wrongListBtn.addEventListener('click', ()=>{
+      if (wrongSet.size === 0){
+        wrongListBtn.classList.remove('shake');
+        void wrongListBtn.offsetWidth;
+        wrongListBtn.classList.add('shake');
+        // show hint text briefly
+        noWrongHint.style.opacity = '1';
+        clearTimeout(noWrongHint._t);
+        noWrongHint._t = setTimeout(()=>{ noWrongHint.style.opacity = '0'; }, 1200);
+        return;
+      }
+      const wrongItems = Array.from(wrongSet).map(b=> verbs.find(v=>v.b===b)).filter(Boolean);
+      showList('틀렸던 동사', wrongItems);
+    });
+
+    backBtn.addEventListener('click', ()=>{
+      listView.style.display = 'none';
+      memoriseBtn.style.display = 'block';
+      wrongListBtn.style.display = 'block';
+      backBtn.style.display = 'none';
+    });
+
+    startBtn.addEventListener('click', startQuiz);
+    exitBtn.addEventListener('click', ()=>{
+      showMain();
+    });
+
+    submitBtn.addEventListener('click', handleSubmit);
+    answerInput.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+    });
+
+    nextBtn.addEventListener('click', ()=>{
+      nextProblem();
+    });
+
+    // initialize main screen
+    showMain();
+  </script>
 </body>
 </html>
-
